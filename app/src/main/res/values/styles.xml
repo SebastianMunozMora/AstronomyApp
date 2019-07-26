@@ -10,6 +10,5 @@
     </style>
     <style name="ButtonStyle">
         <item name="android:background">@drawable/shape</item>
-
     </style>
 </resources>

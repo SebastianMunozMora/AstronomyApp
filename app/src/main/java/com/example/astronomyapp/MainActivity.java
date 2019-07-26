@@ -3,6 +3,7 @@ package com.example.astronomyapp;
 
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,13 +11,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -34,13 +38,18 @@ import static com.example.astronomyapp.BuildConfig.API_KEY;
 public class MainActivity extends AppCompatActivity {
     TextView titleView, descriptionView;
     ImageView imageView;
+    VideoView videoView;
     Button calendarButton;
     DatePickerDialog datePickerDialog;
     String calendarDateFormatted, currentDateFormatted;
+    String iurl, title, description, bdate, mtype, copyright;
     String minDate = "1995-06-16", requestDate;
     Calendar minDateCalendar, todayCalendar;
     Date calendarDate;
     Calendar currentCalendar;
+
+
+
     int currentDayOfYear;
     String ApiKey = API_KEY;
     @SuppressLint("ClickableViewAccessibility")
@@ -54,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         calendarButton = findViewById(R.id.textDate);
         descriptionView = findViewById(R.id.textDesc);
         imageView = findViewById(R.id.imageView);
+        videoView = findViewById(R.id.videoView);
 
         //Current Date
         Date currentDate = Calendar.getInstance().getTime();
@@ -104,12 +114,10 @@ public class MainActivity extends AppCompatActivity {
             public void onSwipeRight() {
                 //Toast.makeText(MainActivity.this, "right", Toast.LENGTH_SHORT).show();
                 subsDay(currentCalendar);
-
             }
             public void onSwipeLeft() {
                 //Toast.makeText(MainActivity.this, "left", Toast.LENGTH_SHORT).show();
                 addDay(currentCalendar);
-
             }
             public void onSwipeBottom() {
                 //Toast.makeText(MainActivity.this, "bottom", Toast.LENGTH_SHORT).show();
@@ -117,11 +125,14 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+
+        //video
+
     }
 
     public void addDay(Calendar calendar){
+        calendar.set(Calendar.HOUR,0);
         if (calendar.getTimeInMillis() < todayCalendar.getTimeInMillis()){
-
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
         Date date = calendar.getTime();
@@ -139,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         makeRequest(formatDate(date));
     }
     public void makeRequest(String date){
-        updateGUI(date);
+        //updateGUI(date);
         String url = "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=" + API_KEY;
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -147,9 +158,16 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            Picasso.get().load(response.getString("url")).into(imageView);
+                            iurl = response.getString("url");
+                            title = response.getString("title");
+                            description = response.getString("explanation");
+                            bdate = response.getString("date");
+                            mtype = response.getString("media_type");
+                            //copyright = response.getString("copyright");
+                            updateGUI();
+                            /*Picasso.get().load(response.getString("url")).into(imageView);
                             titleView.setText(response.getString("title"));
-                            descriptionView.setText(response.getString("explanation"));
+                            descriptionView.setText(response.getString("explanation"));*/
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -167,8 +185,16 @@ public class MainActivity extends AppCompatActivity {
         // Access the RequestQueue through your singleton class.
         MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
-    public void updateGUI(String buttonDate){
-        calendarButton.setText(buttonDate);
+    public void updateGUI(){
+        Picasso.get().load(iurl).into(imageView);
+        titleView.setText(title);
+        descriptionView.setText(description);
+        calendarButton.setText(bdate);
+        videoView.setVideoURI(Uri.parse(iurl));
+        videoView.setMediaController(new MediaController(this));
+        videoView.requestFocus();
+        //videoView.setVideoPath(iurl);
+        videoView.start();
     }
 
     public String formatDate (Date date){
